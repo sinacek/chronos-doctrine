@@ -15,9 +15,9 @@
     "source": "https://github.com/warhuhn/chronos-php"
   },
   "require": {
-    "php": ">=7.2",
-    "cakephp/chronos": "^2.0",
-    "doctrine/dbal": "^2.10|^3.0"
+    "php": ">=8.1",
+    "cakephp/chronos": "^3",
+    "doctrine/dbal": "^4"
   },
   "require-dev": {
     "phpunit/phpunit": "^10"
@@ -34,5 +34,6 @@
   },
   "scripts": {
     "test": "vendor/bin/phpunit"
-  }
+  },
+  "minimum-stability": "beta"
 }

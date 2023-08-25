@@ -9,41 +9,57 @@
 namespace Warhuhn\Doctrine\DBAL\Types;
 
 
-use Cake\Chronos\Date;
+use Cake\Chronos\ChronosDate;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Types\DateType;
+use Doctrine\DBAL\Types\Exception\InvalidFormat;
+use Doctrine\DBAL\Types\Exception\InvalidType;
+use Doctrine\DBAL\Types\Type;
 
-class ChronosDateType extends DateType
+class ChronosDateType extends Type
 {
-    const CHRONOS_DATE = 'chronos_date';
+    public const NAME = 'chronos_date';
 
     /**
      * {@inheritDoc}
      */
-    public function getName(): string
+    public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
-        return self::CHRONOS_DATE;
+        return $platform->getDateTypeDeclarationSQL($column);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function convertToPHPValue($value, AbstractPlatform $platform): ?Date
+    public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): ?string
     {
         if ($value === null) {
             return null;
         }
 
-        $dateTime = parent::convertToPHPValue($value, $platform);
+        if ($value instanceof ChronosDate) {
+            return $value->format($platform->getDateFormatString());
+        }
 
-        return new Date($dateTime);
+        throw InvalidType::new($value, static::class, ['null', ChronosDate::class]);
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
-    public function requiresSQLCommentHint(AbstractPlatform $platform): bool
+    public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?ChronosDate
     {
-        return true;
+        if ($value === null || $value instanceof ChronosDate) {
+            return null;
+        }
+
+        try {
+            return ChronosDate::createFromFormat($platform->getDateFormatString(), $value);
+        } catch (\InvalidArgumentException) {
+            throw InvalidFormat::new(
+                $value,
+                static::class,
+                $platform->getDateTimeFormatString()
+            );
+        }
     }
 }

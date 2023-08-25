@@ -42,6 +42,12 @@ class ChronosDateTimeTypeTest extends TestCase
     }
 
 
+	public function testInvalidData(): void
+	{
+		$this->expectException(ConversionException::class);
+		$this->type->convertToDatabaseValue('aaaa', $this->platform);
+    }
+
 	public function testInvalidDateConversion(): void
 	{
 		$this->expectException(ConversionException::class);

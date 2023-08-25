@@ -8,8 +8,7 @@
 
 namespace Tests\Warhuhn\Doctrine\DBAL\Types;
 
-use Cake\Chronos\Chronos;
-use Cake\Chronos\Date;
+use Cake\Chronos\ChronosDate;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\ConversionException;
 use Doctrine\DBAL\Types\Type;
@@ -43,6 +42,12 @@ class ChronosDateTypeTest extends TestCase
     }
 
 
+    public function testInvalidData(): void
+    {
+        $this->expectException(ConversionException::class);
+        $this->type->convertToPHPValue('aaaa', $this->platform);
+    }
+
 	public function testInvalidDateConversion(): void
     {
 		$this->expectException(ConversionException::class);
@@ -53,13 +58,13 @@ class ChronosDateTypeTest extends TestCase
     {
         $obj = $this->type->convertToPHPValue('2016-11-05', $this->platform);
 
-        static::assertInstanceOf(Date::class, $obj);
+        static::assertInstanceOf(ChronosDate::class, $obj);
         static::assertEquals('2016-11-05', $obj->format('Y-m-d'));
     }
 
     public function testConvertToDatabaseValue(): void
     {
-        $value = $this->type->convertToDatabaseValue(new Date('2016-11-05'), $this->platform);
+        $value = $this->type->convertToDatabaseValue(new ChronosDate('2016-11-05'), $this->platform);
 
         static::assertEquals('2016-11-05', $value);
     }

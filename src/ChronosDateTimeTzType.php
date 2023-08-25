@@ -11,39 +11,55 @@ namespace Warhuhn\Doctrine\DBAL\Types;
 
 use Cake\Chronos\Chronos;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Types\DateTimeTzType;
+use Doctrine\DBAL\Types\Exception\InvalidFormat;
+use Doctrine\DBAL\Types\Exception\InvalidType;
+use Doctrine\DBAL\Types\Type;
 
-class ChronosDateTimeTzType extends DateTimeTzType
+class ChronosDateTimeTzType extends Type
 {
-    const CHRONOS_DATETIMETZ = 'chronos_datetimetz';
+    const NAME = 'chronos_datetimetz';
 
     /**
      * {@inheritDoc}
      */
-    public function getName(): string
+    public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
-        return self::CHRONOS_DATETIMETZ;
+        return $platform->getDateTimeTzTypeDeclarationSQL($column);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function convertToPHPValue($value, AbstractPlatform $platform): ?Chronos
+    public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): ?string
     {
         if ($value === null) {
             return null;
         }
 
-        $dateTime = parent::convertToPHPValue($value, $platform);
+        if ($value instanceof Chronos) {
+            return $value->format($platform->getDateTimeTzFormatString());
+        }
 
-        return Chronos::instance($dateTime);
+        throw InvalidType::new($value, static::class, ['null', Chronos::class]);
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
-    public function requiresSQLCommentHint(AbstractPlatform $platform): bool
+    public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?Chronos
     {
-        return true;
+        if ($value === null || $value instanceof Chronos) {
+            return null;
+        }
+
+        try {
+            return Chronos::createFromFormat($platform->getDateTimeTzFormatString(), $value);
+        } catch (\InvalidArgumentException) {
+            throw InvalidFormat::new(
+                $value,
+                static::class,
+                $platform->getDateTimeTzFormatString()
+            );
+        }
     }
 }
